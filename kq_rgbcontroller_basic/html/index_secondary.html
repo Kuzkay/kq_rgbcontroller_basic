@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="js/jquery.js"></script>
+    <script src="js/jquery-ui.js"></script>
+    <script type="text/javascript" src="farbtastic/farbtastic.js"></script>
+    <link rel="stylesheet" href="farbtastic/farbtastic.css" type="text/css"/>
+</head>
+<body>
+<div class="container">
+    <h1 class="title">RGB Controller (Basic)</h1>
+
+    <form class="hidden"><input type="text" id="color" name="color" value="#123456"/></form>
+    <div class="picker-screen">
+        <div id="menu-one">
+            <div class="colorpicker" id="colorpicker"></div>
+        </div>
+    </div>
+    <div class="buttons-container">
+        <div class="button" id="apply"><span>Apply Underglow Color</span></div>
+    </div>
+    <div class="headlight-container">
+        <h3>Headlight Controller</h3>
+        <div class="headlight-options">
+            <div class="option" color="-1" style="background-color: lightcyan"></div>
+            <div class="option" color="0" style="background-color: white"></div>
+            <div class="option" color="1" style="background-color: blue"></div>
+            <div class="option" color="2" style="background-color: aqua"></div>
+            <div class="option" color="3" style="background-color: aquamarine"></div>
+            <div class="option" color="4" style="background-color: mediumspringgreen"></div>
+            <div class="option" color="5" style="background-color: yellow"></div>
+            <div class="option" color="6" style="background-color: gold"></div>
+            <div class="option" color="7" style="background-color: orange"></div>
+            <div class="option" color="8" style="background-color: red"></div>
+            <div class="option" color="9" style="background-color: hotpink"></div>
+            <div class="option" color="10" style="background-color: deeppink"></div>
+            <div class="option" color="11" style="background-color: purple"></div>
+            <div class="option" color="12" style="background-color: darkviolet"></div>
+        </div>
+    </div>
+    <span class="kq">KuzQuality.com</span>
+</div>
+</body>
+</html>
+
+<script>
+    $(document).ready(function () {
+        var menu = false;
+        var animateHeadlights = true;
+
+        var picker = $('#colorpicker').farbtastic('#color');
+
+
+        $(document).on('click', '#apply', function () {
+            var color = $('#color').val();
+            var rgb = hexToRgb(color);
+            $('.animation').removeClass('selected');
+            $('.toggle').removeClass('selected');
+
+            fetch(`https://kq_rgbcontroller_basic/SetRGB`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    r: rgb.r,
+                    b: rgb.b,
+                    g: rgb.g,
+                })
+            })
+        });
+
+        $(document).on('click', '.option', function () {
+            var color = $(this).attr('color');
+            fetch(`https://kq_rgbcontroller_basic/SetXenon`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    color: color,
+                })
+            })
+        });
+
+        $(document).on('click', '#animate-headlights', function () {
+            animateHeadlights = !animateHeadlights;
+            if (animateHeadlights) {
+                $('#animate-headlights').addClass('yes').removeClass('no');
+            } else {
+                $('#animate-headlights').addClass('no').removeClass('yes');
+            }
+            fetch(`https://kq_rgbcontroller_basic/SetAnimateHeadlights`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    bool: animateHeadlights,
+                })
+            })
+        });
+
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.data.event === 'show') {
+                if (event.data.state) {
+                    $('body').show();
+                } else {
+                    $('body').hide();
+                }
+            }
+
+            if (event.data.event === 'disallowHeadlights') {
+                $('.headlight-container').addClass('hidden');
+                $('.animation-options').addClass('hidden');
+                $('.animation-container').addClass('full');
+                $('.animation-menu').addClass('full');
+                $('.toggle-menu').addClass('full');
+            }
+        });
+
+        document.addEventListener('keyup', logKey);
+
+        function logKey(e) {
+            if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'e' || e.key === ' ') {
+                fetch(`https://kq_rgbcontroller_basic/CloseMenu`, {
+                    method: 'POST',
+                })
+            }
+        }
+
+        fetch(`https://kq_rgbcontroller_basic/NUIReady`, {
+            method: 'POST',
+        })
+    });
+</script>
+
+<style>
+    @font-face {
+        font-family: BebasNeue;
+        src: url('fonts/bebasneue.ttf') format('truetype');
+    }
+
+    body {
+        font-family: BebasNeue, sans-serif !important;
+        user-select: none;
+        display: none;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .container {
+        background-color: rgba(120, 113, 113, 0.9);
+        border-radius: 0.25vh;
+        border: 1px solid rgba(64, 57, 57, 0.2);
+        width: 36vh;
+        height: 50vh;
+        position: absolute;
+        right: 3%;
+        bottom: 3%;
+        box-shadow: 0 0 2vh rgba(54, 53, 53, 0.2) inset;
+    }
+
+    .title {
+        font-size: 4vh;
+        width: 100%;
+        text-align: center;
+        margin: 1vh 0 0;
+        font-weight: normal;
+    }
+
+    .picker-screen {
+        width: 90%;
+        margin-left: 5%;
+        top: 6vh;
+        height: 22vh;
+        background-color: rgb(9, 10, 12);
+        border-radius: 0.25vh;
+    }
+
+    .colorpicker {
+        padding-left: calc(((36vh * 0.9) / 2) - (195px / 2));
+        padding-top: calc((22vh / 2) - (195px / 2));
+    }
+
+    .headlight-container {
+        width: 90%;
+        height: 12vh;
+        margin-left: 5%;
+        border-radius: 0.25vh;
+        background-color: rgba(40, 40, 40, 0.2);
+    }
+
+    .headlight-container h3 {
+        margin: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .headlight-options {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        padding: 0.2vh 0.8vh 0.8vh;
+    }
+
+    .option {
+        width: 3.5vh;
+        height: 3.5vh;
+        border-radius: 0.15vh;
+        margin: 0.25vh;
+        cursor: pointer;
+    }
+
+    .buttons-container {
+        display: flex;
+        justify-items: center;
+        align-items: center;
+        justify-content: space-around;
+        top: 29vh;
+    }
+
+    .buttons-container {
+        display: flex;
+        justify-items: center;
+        align-items: center;
+        justify-content: space-around;
+        top: 29vh;
+    }
+
+    .button {
+        width: calc(100% - 6vh);
+        margin: 2vh;
+        height: 4vh;
+        background-color: rgb(191, 0, 0);
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition-duration: 0.1s;
+        border-radius: 0.15vh;
+    }
+
+    .button.disabled {
+        background-color: rgba(50, 50, 50, 0.5);
+    }
+
+    .button span {
+        text-align: center;
+        width: 100%;
+        margin: auto;
+        justify-self: center;
+        font-size: 2vh;
+        color: rgb(240, 240, 240);
+    }
+
+    .kq {
+        position: absolute;
+        bottom: 0;
+        left: 0.5vh;
+        font-size: 1.5vh;
+        color: rgba(255,255,255,0.4);
+    }
+</style>
